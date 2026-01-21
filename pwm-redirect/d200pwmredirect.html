@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 1. The label ChromeOS uses for the App Launcher and Shelf -->
+    <!-- It is vital this stays here for the labeling to work -->
+    <title>D200 Password Self-Service</title>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 2. Link to the manifest for the icon and short name -->
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        /* A completely blank white page */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+
+    <script>
+        // The internal destination URL
+        const targetUrl = "https://pwm.wcusd200.org/pwm";
+
+        function doRedirect() {
+            // Using replace() prevents the user from going "Back" to this blank page
+            window.location.replace(targetUrl);
+        }
+
+        // We still use a 1.5-second delay to ensure ChromeOS has enough time 
+        // to "scrape" the <title> tag for the app name before the page changes.
+        window.onload = () => {
+            // Redirect is blocked if viewing in the preview editor
+            if (!window.location.href.includes('preview')) {
+                setTimeout(doRedirect, 1500);
+            }
+        };
+    </script>
+</head>
+<body>
+    <!-- Blank body to keep the transition invisible -->
+</body>
+</html>
