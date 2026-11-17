@@ -183,6 +183,9 @@
         <button id="simulateValidBtn" type="button" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition cursor-pointer">
           Simulate Valid URL Scan
         </button>
+        <button id="simulateBlockedBtn" type="button" class="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs font-medium transition cursor-pointer">
+          Simulate Blocked URL
+        </button>
         <button id="simulateInvalidBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition cursor-pointer">
           Simulate Non-URL QR
         </button>
@@ -195,14 +198,18 @@
      * KIOSK CONFIGURATION
      * - SHOW_TEST_CONTROLS: Set to false before hosting for your Chromebook kiosk.
      * - OPEN_MODE:
-     *     'iframe' = Opens the link inside the app with a big "Scan Another QR Code" bar at the top (works out of the box).
      *     'popup'  = Opens the link in a second window with a native ChromeOS Close (X) button
-     *                (requires enabling "Allow app to open new windows" in Google Admin Console; best for Google Login pages).
-     * - ALLOWED_PREFIXES: Optional array of allowed URL prefixes (leave [] to allow any http/https link).
+     *                (requires enabling "Allow app to open new windows" in Google Admin Console; required for Glint).
+     *     'iframe' = Opens the link inside the app with a top "Scan Another QR Code" bar (only for sites allowing frames).
+     * - ALLOWED_DOMAINS: Restrict by hostname (leave [] to allow any domain). Supports wildcards like '*.yourcompany.com'.
+     * - ALLOWED_PREFIXES: Optional stricter filter for specific URL paths (leave [] if not needed).
      */
     const SHOW_TEST_CONTROLS = false;
-    const OPEN_MODE = 'iframe';
-    const ALLOWED_PREFIXES = []; // Example: ['https://docs.google.com/', 'https://yourorganization.org/']
+    const OPEN_MODE = 'popup';
+    const ALLOWED_DOMAINS = [
+      'console.nerchat*'
+    ];
+    const ALLOWED_PREFIXES = [];
     const REDIRECT_DELAY_MS = 650; // Brief confirmation flash before opening link
 
     // DOM Elements
@@ -231,6 +238,7 @@
     const closeViewerBtn = document.getElementById('closeViewerBtn');
     const reloadViewerBtn = document.getElementById('reloadViewerBtn');
     const simulateValidBtn = document.getElementById('simulateValidBtn');
+    const simulateBlockedBtn = document.getElementById('simulateBlockedBtn');
     const simulateInvalidBtn = document.getElementById('simulateInvalidBtn');
 
     // State variables
@@ -247,76 +255,97 @@
     }
 
     /**
-     * Plays a clean synthesized chime using Web Audio API (zero external sound files needed)
+     * Plays a subtle synthesized chime on scan success or warning (no external audio files needed)
      */
-    function playChime(type = 'success') {
+    function playChime(type) {
       if (!soundEnabled) return;
       try {
         if (!audioCtx) {
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-
-        const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
 
+        const now = audioCtx.currentTime;
         if (type === 'success') {
-          // Rising two-tone confirmation chime
           osc.type = 'sine';
           osc.frequency.setValueAtTime(587.33, now);       // D5
-          osc.frequency.setValueAtTime(880.0, now + 0.09); // A5
-          gain.gain.setValueAtTime(0.14, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.frequency.setValueAtTime(880, now + 0.09);   // A5
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
           osc.start(now);
-          osc.stop(now + 0.29);
+          osc.stop(now + 0.25);
         } else {
-          // Low subtle buzz for non-URL QR codes
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(240, now);
           gain.gain.setValueAtTime(0.1, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
           osc.start(now);
-          osc.stop(now + 0.23);
+          osc.stop(now + 0.2);
         }
       } catch (e) {
-        // Ignore audio errors if browser blocks autoplay audio before user interaction
+        // Ignore audio context restrictions if user hasn't interacted yet
       }
     }
 
     /**
-     * Validates that the decoded QR string is a safe http/https URL and passes any domain allowlist
+     * Validates that the decoded QR string is a safe http/https URL and matches ALLOWED_DOMAINS / ALLOWED_PREFIXES
      */
-    function isValidDestination(rawText) {
+    function validateDestination(rawText, forceBlockedTest = false) {
       const trimmed = rawText.trim();
       try {
         const parsed = new URL(trimmed);
         if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          return null;
+          return { valid: false, reason: 'not_url' };
         }
+
+        if (forceBlockedTest) {
+          return { valid: false, reason: 'blocked_domain', host: parsed.hostname };
+        }
+
+        const host = parsed.hostname.toLowerCase();
+
+        // Check domain allowlist (prevents spoofing like "allowed.com.evil.com")
+        if (ALLOWED_DOMAINS.length > 0) {
+          const domainMatched = ALLOWED_DOMAINS.some(entry => {
+            const cleanEntry = entry.trim().toLowerCase();
+            if (cleanEntry.startsWith('*.')) {
+              const baseDomain = cleanEntry.slice(2);
+              return host === baseDomain || host.endsWith('.' + baseDomain);
+            }
+            return host === cleanEntry;
+          });
+          if (!domainMatched) {
+            return { valid: false, reason: 'blocked_domain', host };
+          }
+        }
+
+        // Check exact URL prefix allowlist (if configured)
         if (ALLOWED_PREFIXES.length > 0) {
-          const allowed = ALLOWED_PREFIXES.some(prefix => parsed.href.startsWith(prefix));
-          if (!allowed) return null;
+          const prefixMatched = ALLOWED_PREFIXES.some(prefix => parsed.href.startsWith(prefix.trim()));
+          if (!prefixMatched) {
+            return { valid: false, reason: 'blocked_prefix', host };
+          }
         }
-        return parsed.href;
+
+        return { valid: true, url: parsed.href };
       } catch {
-        return null;
+        return { valid: false, reason: 'not_url' };
       }
     }
 
     /**
      * Handles a detected QR payload (either from live camera or preview simulator)
      */
-    function handleDetectedCode(rawValue, isSimulated = false) {
+    function handleDetectedCode(rawValue, isSimulated = false, forceBlockedTest = false) {
       if (isRedirecting) return;
 
-      const validUrl = isValidDestination(rawValue);
+      const check = validateDestination(rawValue, forceBlockedTest);
 
-      if (validUrl) {
+      if (check.valid) {
+        const validUrl = check.url;
         isRedirecting = true;
         playChime('success');
 
@@ -361,8 +390,13 @@
 
         playChime('warning');
         statusBanner.className = 'mt-5 w-full px-5 py-4 rounded-2xl bg-amber-950/60 border border-amber-500/40 flex items-center justify-center gap-3 text-center transition-colors';
-        const previewSnippet = rawValue.length > 48 ? rawValue.slice(0, 48) + '...' : rawValue;
-        statusText.textContent = `Ignored non-URL or blocked QR: "${previewSnippet}"`;
+
+        if (check.reason === 'blocked_domain' || check.reason === 'blocked_prefix') {
+          statusText.textContent = `Blocked website (${check.host}): Only approved QR links are permitted.`;
+        } else {
+          const previewSnippet = rawValue.length > 48 ? rawValue.slice(0, 48) + '...' : rawValue;
+          statusText.textContent = `Ignored non-URL QR code: "${previewSnippet}"`;
+        }
       }
     }
 
@@ -456,12 +490,17 @@
     // Preview simulator buttons
     simulateValidBtn.addEventListener('click', () => {
       resetScannerUI();
-      handleDetectedCode('https://example.org', true);
+      handleDetectedCode('https://example.org', true, false);
+    });
+
+    simulateBlockedBtn.addEventListener('click', () => {
+      resetScannerUI();
+      handleDetectedCode('https://unapproved-site.com/login', true, true);
     });
 
     simulateInvalidBtn.addEventListener('click', () => {
       resetScannerUI();
-      handleDetectedCode('WIFI:S:GuestNetwork;T:WPA;P:password123;;', true);
+      handleDetectedCode('WIFI:S:GuestNetwork;T:WPA;P:password123;;', true, false);
     });
 
     resetPreviewBtn.addEventListener('click', resetScannerUI);
