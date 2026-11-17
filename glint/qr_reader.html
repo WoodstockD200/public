@@ -78,10 +78,10 @@
 
   <!-- Main Viewfinder Area -->
   <main class="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-4 w-full max-w-3xl mx-auto">
-    
+
     <!-- Camera Container -->
     <div id="viewfinderCard" class="relative w-full aspect-video max-h-[58vh] bg-slate-900 rounded-3xl overflow-hidden border-2 border-slate-800 shadow-2xl transition-colors duration-300">
-      
+
       <!-- Live Webcam Feed (Mirrored by default so users can easily align their QR code) -->
       <video id="camera" autoplay playsinline muted class="w-full h-full object-cover -scale-x-100 transition-transform duration-300"></video>
 
@@ -109,7 +109,7 @@
           <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl"></div>
           <!-- Bottom Right Corner -->
           <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl"></div>
-          
+
           <!-- Animated Scanning Beam -->
           <div id="scanBeam" class="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_12px_rgba(96,165,250,0.9)] animate-scan-line"></div>
         </div>
@@ -161,47 +161,6 @@
 
       <div id="viewerUrlText" class="hidden sm:block text-xs font-mono text-slate-400 truncate max-w-md">
         https://example.com
-      </div>
-        <a id="manualOpenBtn" href="#" target="_blank" rel="noopener" class="hidden mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm sm:text-base shadow-lg transition cursor-pointer">
-          <span>Open Link Now</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-          </svg>
-        </a>
-        <button id="resetPreviewBtn" type="button" class="hidden mt-3 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition cursor-pointer">
-          Reset Preview Scanner
-        </button>
-      </div>
-    </div>
-
-    <!-- High-Contrast Instruction / Status Banner -->
-    <div id="statusBanner" class="mt-5 w-full px-5 py-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center gap-3 text-center transition-colors">
-      <svg id="statusIcon" class="w-6 h-6 text-blue-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-      </svg>
-      <span id="statusText" class="text-base sm:text-lg font-medium text-slate-100">
-        Hold a QR code up to the camera...
-      </span>
-    </div>
-
-    <!-- Helpful Kiosk Navigation Hint -->
-    <p class="mt-3 text-xs text-slate-500 text-center">
-      Close the opened window (<strong>X</strong>) when finished to return to the scanner for the next user.
-    </p>
-  </main>
-
-  <!-- Embedded Kiosk Web Viewer (Used when OPEN_MODE = 'iframe' or during preview simulation) -->
-  <div id="webViewerModal" class="hidden fixed inset-0 z-50 flex flex-col bg-slate-950">
-    <div class="w-full px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3 shadow-lg">
-      <button id="closeViewerBtn" type="button" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold shadow transition cursor-pointer shrink-0">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-        <span>Scan Another QR Code</span>
-      </button>
-
-      <div id="viewerUrlText" class="hidden sm:block text-xs font-mono text-slate-400 truncate max-w-md">
-        https://share.nerchat.com
       </div>
 
       <button id="reloadViewerBtn" type="button" title="Reload Page" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer shrink-0">
@@ -260,7 +219,6 @@
     const video = document.getElementById('camera');
     const cameraFallback = document.getElementById('cameraFallback');
     const fallbackReason = document.getElementById('fallbackReason');
-    const cameraBadge = document.getElementById('cameraBadge');
     const cameraDot = document.getElementById('cameraDot');
     const cameraBadgeText = document.getElementById('cameraBadgeText');
     const viewfinderCard = document.getElementById('viewfinderCard');
@@ -268,7 +226,133 @@
     const detectedUrlDisplay = document.getElementById('detectedUrlDisplay');
     const resetPreviewBtn = document.getElementById('resetPreviewBtn');
     const statusBanner = document.getElementById('statusBanner');
-// ... existing code ... -->
+    const statusText = document.getElementById('statusText');
+    const mirrorBtn = document.getElementById('mirrorBtn');
+    const soundBtn = document.getElementById('soundBtn');
+    const soundOnIcon = document.getElementById('soundOnIcon');
+    const soundOffIcon = document.getElementById('soundOffIcon');
+    const webViewerModal = document.getElementById('webViewerModal');
+    const closeViewerBtn = document.getElementById('closeViewerBtn');
+    const viewerUrlText = document.getElementById('viewerUrlText');
+    const reloadViewerBtn = document.getElementById('reloadViewerBtn');
+    const kioskFrame = document.getElementById('kioskFrame');
+    const testToolbar = document.getElementById('testToolbar');
+    const simulateValidBtn = document.getElementById('simulateValidBtn');
+    const simulateBlockedBtn = document.getElementById('simulateBlockedBtn');
+    const simulateInvalidBtn = document.getElementById('simulateInvalidBtn');
+
+    // State
+    let isMirrored = true;
+    let soundEnabled = true;
+    let isRedirecting = false;
+
+    // Hide test toolbar if configured for production
+    if (!SHOW_TEST_CONTROLS && testToolbar) {
+      testToolbar.classList.add('hidden');
+    }
+
+    /**
+     * Synthesizes a clean confirmation beep using the Web Audio API (zero external audio files)
+     */
+    function playBeep(type = 'success') {
+      if (!soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(660, ctx.currentTime);
+          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.22);
+        } else {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(240, ctx.currentTime);
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.2);
+        }
+      } catch (e) {
+        // Ignore audio errors if blocked prior to user gesture
+      }
+    }
+
+    /**
+     * Validates that a decoded QR string is a safe http/https URL and passes any domain/prefix rules
+     */
+    function isUrlAllowed(rawText) {
+      try {
+        const parsed = new URL(rawText);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return { allowed: false, reason: 'not_url' };
+        }
+
+        // Check hostname allowlist if configured
+        if (ALLOWED_DOMAINS.length > 0) {
+          const host = parsed.hostname.toLowerCase();
+          const domainMatch = ALLOWED_DOMAINS.some((rule) => {
+            const cleanRule = rule.trim().toLowerCase();
+            if (cleanRule.startsWith('*.')) {
+              const baseDomain = cleanRule.slice(2);
+              return host === baseDomain || host.endsWith('.' + baseDomain);
+            }
+            return host === cleanRule;
+          });
+
+          if (!domainMatch) {
+            return { allowed: false, reason: 'blocked_domain' };
+          }
+        }
+
+        // Check full URL prefix allowlist if configured
+        if (ALLOWED_PREFIXES.length > 0) {
+          const prefixMatch = ALLOWED_PREFIXES.some((prefix) => rawText.startsWith(prefix));
+          if (!prefixMatch) {
+            return { allowed: false, reason: 'blocked_domain' };
+          }
+        }
+
+        return { allowed: true, url: parsed.href };
+      } catch (_) {
+        return { allowed: false, reason: 'not_url' };
+      }
+    }
+
+    /**
+     * Handles a decoded QR string—opens valid URLs or flags invalid/blocked QR codes
+     */
+    function handleScannedText(rawText, isSimulated = false) {
+      if (isRedirecting) return;
+      const trimmed = rawText.trim();
+      const check = isUrlAllowed(trimmed);
+
+      if (check.allowed) {
+        isRedirecting = true;
+        const validUrl = check.url;
+        playBeep('success');
+
+        // Update UI to green success state
+        viewfinderCard.classList.remove('border-slate-800');
+        viewfinderCard.classList.add('border-emerald-500');
+        detectedUrlDisplay.textContent = validUrl;
+        redirectOverlay.classList.remove('hidden');
+
+        statusBanner.className = 'mt-5 w-full px-5 py-4 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 flex items-center justify-center gap-3 text-center transition-colors';
+        statusText.textContent = 'Opening ' + validUrl + '...';
+
+        if (isSimulated) {
+          resetPreviewBtn.classList.remove('hidden');
+        }
+
         setTimeout(() => {
           if (OPEN_MODE === 'popup' && !isSimulated) {
             // Opens a secondary window with a native ChromeOS Close (X) button
@@ -302,10 +386,79 @@
       redirectOverlay.classList.add('hidden');
       resetPreviewBtn.classList.add('hidden');
       viewfinderCard.classList.remove('border-emerald-500');
+      viewfinderCard.classList.add('border-slate-800');
       statusBanner.className = 'mt-5 w-full px-5 py-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center gap-3 text-center transition-colors';
       statusText.textContent = 'Hold a QR code up to the camera...';
     }
-// ... existing code ... -->
+
+    /**
+     * Closes the embedded web viewer and immediately returns to scanning
+     */
+    function closeWebViewer() {
+      webViewerModal.classList.add('hidden');
+      kioskFrame.src = 'about:blank';
+      resetScannerUI();
+    }
+
+    /**
+     * Initializes Chrome's native BarcodeDetector API and starts the webcam scan loop
+     */
+    async function startScanner() {
+      if (!('BarcodeDetector' in window)) {
+        cameraDot.className = 'w-2 h-2 rounded-full bg-rose-500';
+        cameraBadgeText.textContent = 'API Unavailable';
+        cameraFallback.classList.remove('hidden');
+        fallbackReason.textContent = 'This browser does not support the built-in BarcodeDetector API. Use Chrome or ChromeOS.';
+        return;
+      }
+
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        });
+
+        video.srcObject = stream;
+        cameraDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        cameraBadgeText.textContent = 'Scanner Active';
+
+        const scanLoop = async () => {
+          if (!isRedirecting && video.readyState === video.HAVE_ENOUGH_DATA) {
+            try {
+              const codes = await detector.detect(video);
+              if (codes.length > 0 && codes[0].rawValue) {
+                handleScannedText(codes[0].rawValue, false);
+              }
+            } catch (detectErr) {
+              // Ignore transient frame read errors while video stream warms up
+            }
+          }
+          requestAnimationFrame(scanLoop);
+        };
+
+        requestAnimationFrame(scanLoop);
+      } catch (err) {
+        // Gracefully display fallback UI if camera permission is blocked (such as in an iframe preview)
+        cameraDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        cameraBadgeText.textContent = 'Preview Mode';
+        cameraFallback.classList.remove('hidden');
+        if (err && err.name === 'NotFoundError') {
+          fallbackReason.textContent = 'No webcam detected on this device. Connect a camera to scan physical QR codes.';
+        }
+      }
+    }
+
+    // UI Button Controls
+    mirrorBtn.addEventListener('click', () => {
+      isMirrored = !isMirrored;
+      video.classList.toggle('-scale-x-100', isMirrored);
+    });
+
     soundBtn.addEventListener('click', () => {
       soundEnabled = !soundEnabled;
       soundOnIcon.classList.toggle('hidden', !soundEnabled);
@@ -314,10 +467,52 @@
 
     resetPreviewBtn.addEventListener('click', resetScannerUI);
     closeViewerBtn.addEventListener('click', closeWebViewer);
-// ... existing code ... -->
+
+    reloadViewerBtn.addEventListener('click', () => {
+      if (kioskFrame.src && kioskFrame.src !== 'about:blank') {
+        kioskFrame.src = kioskFrame.src;
+      }
+    });
+
+    // Allow pressing Escape key on Chromebook keyboard to exit the opened page back to scanner
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !webViewerModal.classList.contains('hidden')) {
+        closeWebViewer();
+      }
+    });
+
+    // Reset scanner state if browser restores the page from back-forward cache (bfcache)
+    window.addEventListener('pageshow', () => {
+      if (webViewerModal.classList.contains('hidden')) {
+        resetScannerUI();
+      }
+    });
+
+    // Simulator Buttons for Testing in Preview
     if (simulateValidBtn) {
       simulateValidBtn.addEventListener('click', () => {
         handleScannedText('https://example.com', true);
       });
     }
-// ... existing code ... -->
+
+    if (simulateBlockedBtn) {
+      simulateBlockedBtn.addEventListener('click', () => {
+        playBeep('error');
+        statusBanner.className = 'mt-5 w-full px-5 py-4 rounded-2xl bg-amber-950/60 border border-amber-500/40 flex items-center justify-center gap-3 text-center transition-colors';
+        statusText.textContent = 'Blocked unapproved website: https://unapproved-site.org';
+      });
+    }
+
+    if (simulateInvalidBtn) {
+      simulateInvalidBtn.addEventListener('click', () => {
+        handleScannedText('WIFI:T:WPA;S:GuestNetwork;P:12345678;;', true);
+      });
+    }
+
+    // Start scanner on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      startScanner();
+    });
+  </script>
+</body>
+</html>
