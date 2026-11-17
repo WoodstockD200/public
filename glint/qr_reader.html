@@ -215,7 +215,7 @@
       // Example: 'https://docs.google.com/forms/'
     ];
     const REDIRECT_DELAY_MS = 650; // Brief confirmation flash before opening link
-
+    const SCAN_INTERVAL_MS = 200; // 5 scans per second (200ms) to reduce CPU load and heat
     // DOM Elements
     const video = document.getElementById('camera');
     const cameraFallback = document.getElementById('cameraFallback');
@@ -429,7 +429,7 @@
         cameraBadgeText.textContent = 'Scanner Active';
 
         const scanLoop = async () => {
-          if (!isRedirecting && video.readyState === video.HAVE_ENOUGH_DATA) {
+          if (!isRedirecting && !document.hidden && video.readyState === video.HAVE_ENOUGH_DATA) {
             try {
               const codes = await detector.detect(video);
               if (codes.length > 0 && codes[0].rawValue) {
@@ -439,10 +439,10 @@
               // Ignore transient frame read errors while video stream warms up
             }
           }
-          requestAnimationFrame(scanLoop);
+          setTimeout(scanLoop, SCAN_INTERVAL_MS);
         };
 
-        requestAnimationFrame(scanLoop);
+        setTimeout(scanLoop, SCAN_INTERVAL_MS);
       } catch (err) {
         // Gracefully display fallback UI if camera permission is blocked (such as in an iframe preview)
         cameraDot.className = 'w-2 h-2 rounded-full bg-amber-400';
