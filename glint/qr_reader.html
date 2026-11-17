@@ -199,16 +199,16 @@
      * - SHOW_TEST_CONTROLS: Set to false before hosting for your Chromebook kiosk.
      * - OPEN_MODE:
      *     'popup'  = Opens the link in a second window with a native ChromeOS Close (X) button
-     *                (requires enabling "Allow app to open new windows" in Google Admin Console; required for Glint).
+     *                (requires enabling "Allow app to open new windows" in Google Admin Console).
      *     'iframe' = Opens the link inside the app with a top "Scan Another QR Code" bar (only for sites allowing frames).
-     * - ALLOWED_DOMAINS: Restrict by hostname (leave [] to allow any domain). Supports wildcards like '*.yourcompany.com'.
+     * - ALLOWED_DOMAINS: Restrict by hostname (leave [] to allow any domain). Supports '*' wildcards.
      * - ALLOWED_PREFIXES: Optional stricter filter for specific URL paths (leave [] if not needed).
      */
     const SHOW_TEST_CONTROLS = false;
     const OPEN_MODE = 'popup';
     const ALLOWED_DOMAINS = [
-      '*share.nerchat*',
-      '*console.nerchat*'
+      'share.nerchat.com',
+      'console.nerchat.com'
     ];
     const ALLOWED_PREFIXES = [];
     const REDIRECT_DELAY_MS = 650; // Brief confirmation flash before opening link
@@ -308,13 +308,19 @@
 
         const host = parsed.hostname.toLowerCase();
 
-        // Check domain allowlist (prevents spoofing like "allowed.com.evil.com")
+        // Check domain allowlist (supports exact domains, '*.domain.com', or '*' wildcards)
         if (ALLOWED_DOMAINS.length > 0) {
           const domainMatched = ALLOWED_DOMAINS.some(entry => {
             const cleanEntry = entry.trim().toLowerCase();
-            if (cleanEntry.startsWith('*.')) {
+            if (cleanEntry.startsWith('*.') && !cleanEntry.slice(2).includes('*')) {
               const baseDomain = cleanEntry.slice(2);
               return host === baseDomain || host.endsWith('.' + baseDomain);
+            }
+            if (cleanEntry.includes('*')) {
+              const regexPattern = '^' + cleanEntry
+                .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+                .replace(/\*/g, '.*') + '$';
+              return new RegExp(regexPattern).test(host);
             }
             return host === cleanEntry;
           });
